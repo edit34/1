@@ -1,80 +1,254 @@
 <!DOCTYPE html>
-<html lang="en">
+<html dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>عرض الفيديو بحجم 16:9 ممتد بالكامل</title>
+    <title>مشغل الفيديو</title>
     <style>
         body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
             font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             background-color: #f0f0f0;
+            min-height: 100vh;
         }
+
         .container {
-            text-align: center;
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        #uploadButton, #downloadButton {
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            margin: 5px;
-        }
+
         .video-container {
             position: relative;
             width: 100%;
-            max-width: 800px;
-            padding-bottom: 56.25%; /* نسبة 16:9 */
-            height: 0;
-            margin-top: 20px;
+            padding-top: 56.25%; /* نسبة 16:9 */
+            margin: 20px 0;
+            background: #000;
+            border-radius: 8px;
             overflow: hidden;
-            border: 2px solid #ddd;
         }
-        .video-container video {
+
+        #videoPlayer {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            object-fit: fill; /* تمديد الفيديو ليملأ الإطار بالكامل */
+            object-fit: fill;
+        }
+
+        .button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            transition: background-color 0.3s;
+            width: 150px;
+        }
+
+        .button:hover {
+            background-color: #45a049;
+        }
+
+        .button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .buttons-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .message {
+            text-align: center;
+            margin: 10px 0;
+            color: #666;
+        }
+
+        #processingMessage {
+            color: #4CAF50;
+            font-weight: bold;
+            display: none;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 20px;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            margin: 10px 0;
+            overflow: hidden;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background-color: #4CAF50;
+            transition: width 0.3s ease;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <button id="uploadButton">إضافة فيديو</button>
-        <input type="file" id="videoInput" accept="video/*" style="display: none;">
-        <button id="downloadButton" style="display: none;">تنزيل الفيديو بالحجم المعدل</button>
-        
-        <div class="video-container" id="videoContainer">
-            <video id="videoPlayer" controls></video>
+        <div class="buttons-container">
+            <input type="file" id="fileInput" accept="video/*">
+            <button class="button" onclick="document.getElementById('fileInput').click()">إضافة فيديو</button>
         </div>
+
+        <div class="video-container">
+            <video id="videoPlayer" controls>
+                متصفحك لا يدعم تشغيل الفيديو
+            </video>
+        </div>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <div class="buttons-container">
+            <button id="downloadBtn" class="button" disabled onclick="processAndDownload()">تنزيل الفيديو</button>
+        </div>
+
+        <p class="message" id="message"></p>
+        <p class="message" id="processingMessage">جاري معالجة الفيديو...</p>
     </div>
 
     <script>
-        const uploadButton = document.getElementById('uploadButton');
-        const downloadButton = document.getElementById('downloadButton');
-        const videoInput = document.getElementById('videoInput');
-        const videoContainer = document.getElementById('videoContainer');
+        const fileInput = document.getElementById('fileInput');
         const videoPlayer = document.getElementById('videoPlayer');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const message = document.getElementById('message');
+        const processingMessage = document.getElementById('processingMessage');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        let videoURL = '';
+        let fileName = '';
 
-        let originalFile;
-
-        uploadButton.addEventListener('click', () => {
-            videoInput.click(); // فتح نافذة اختيار الملف
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file && file.type.startsWith('video/')) {
+                fileName = file.name;
+                if (videoURL) {
+                    URL.revokeObjectURL(videoURL);
+                }
+                videoURL = URL.createObjectURL(file);
+                videoPlayer.src = videoURL;
+                downloadBtn.disabled = false;
+                message.textContent = `تم تحميل الفيديو: ${fileName}`;
+            } else {
+                message.textContent = 'الرجاء اختيار ملف فيديو صالح';
+            }
         });
 
-        videoInput.addEventListener('change', () => {
-            const file = videoInput.files[0];
-            if (file) {
-                originalFile = file;
-                const videoURL = URL.createObjectURL(file);
-                videoPlayer.src = videoURL;
-                videoContainer.style.display = 'block';
-                downloadButton.style.display = 'inline'; // إظهار زر التنزيل
+        async function processAndDownload() {
+            if (!videoURL) return;
+
+            processingMessage.style.display = 'block';
+            progressContainer.style.display = 'block';
+            downloadBtn.disabled = true;
+
+            try {
+                // إنشاء مشغل فيديو مؤقت للمعالجة
+                const tempVideo = document.createElement('video');
+                tempVideo.src = videoURL;
+                await new Promise((resolve) => {
+                    tempVideo.onloadedmetadata = resolve;
+                });
+
+                // حساب الأبعاد المطلوبة للحفاظ على نسبة 16:9
+                const targetWidth = 1920; // عرض HD
+                const targetHeight = 1080; // طول HD (16:9)
+
+                // إنشاء MediaRecorder لتسجيل الفيديو
+                const canvas = document.createElement('canvas');
+                canvas.width = targetWidth;
+                canvas.height = targetHeight;
+                const ctx = canvas.getContext('2d');
+
+                const stream = canvas.captureStream();
+                const mediaRecorder = new MediaRecorder(stream, {
+                    mimeType: 'video/webm;codecs=vp9',
+                    videoBitsPerSecond: 8000000
+                });
+
+                const chunks = [];
+                mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+                mediaRecorder.onstop = async () => {
+                    const blob = new Blob(chunks, { type: 'video/webm' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    // تنزيل الفيديو
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `processed_${fileName.split('.')[0]}.webm`;
+                    a.click();
+                    
+                    URL.revokeObjectURL(url);
+                    processingMessage.style.display = 'none';
+                    progressContainer.style.display = 'none';
+                    downloadBtn.disabled = false;
+                    progressBar.style.width = '0%';
+                };
+
+                mediaRecorder.start();
+
+                // معالجة كل إطار من الفيديو
+                let startTime = 0;
+                const processFrame = () => {
+                    if (startTime >= tempVideo.duration) {
+                        mediaRecorder.stop();
+                        return;
+                    }
+
+                    // رسم الإطار الحالي على Canvas
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(0, 0, targetWidth, targetHeight);
+                    ctx.drawImage(tempVideo, 0, 0, targetWidth, targetHeight);
+
+                    // تحديث شريط التقدم
+                    const progress = (startTime / tempVideo.duration) * 100;
+                    progressBar.style.width = `${progress}%`;
+
+                    // الانتقال إلى الإطار التالي
+                    startTime += 1/30; // 30 إطار في الثانية
+                    tempVideo.currentTime = startTime;
+
+                    requestAnimationFrame(processFrame);
+                };
+
+                tempVideo.onseeked = processFrame;
+                tempVideo.currentTime = 0;
+
+            } catch (error) {
+                console.error('Error processing video:', error);
+                processingMessage.style.display = 'none';
+                progressContainer.style.display = 'none';
+                downloadBtn.disabled = false;
+                message.textContent = 'حدث خطأ أثناء معالجة الفيديو';
+            }
+        }
+
+        window.addEventListener('beforeunload', function() {
+            if (videoURL) {
+                URL.revokeObjectURL(videoURL);
             }
         });
     </script>
