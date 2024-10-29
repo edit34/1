@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عرض الفيديو بحجم 16:9 ممتد بالكامل</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+        .container {
+            text-align: center;
+        }
+        #uploadButton, #downloadButton {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            padding-bottom: 56.25%; /* نسبة 16:9 */
+            height: 0;
+            margin-top: 20px;
+            overflow: hidden;
+            border: 2px solid #ddd;
+        }
+        .video-container video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: fill; /* تمديد الفيديو ليملأ الإطار بالكامل */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button id="uploadButton">إضافة فيديو</button>
+        <input type="file" id="videoInput" accept="video/*" style="display: none;">
+        <button id="downloadButton" style="display: none;">تنزيل الفيديو بالحجم المعدل</button>
+        
+        <div class="video-container" id="videoContainer">
+            <video id="videoPlayer" controls></video>
+        </div>
+    </div>
+
+    <script>
+        const uploadButton = document.getElementById('uploadButton');
+        const downloadButton = document.getElementById('downloadButton');
+        const videoInput = document.getElementById('videoInput');
+        const videoContainer = document.getElementById('videoContainer');
+        const videoPlayer = document.getElementById('videoPlayer');
+
+        let originalFile;
+
+        uploadButton.addEventListener('click', () => {
+            videoInput.click(); // فتح نافذة اختيار الملف
+        });
+
+        videoInput.addEventListener('change', () => {
+            const file = videoInput.files[0];
+            if (file) {
+                originalFile = file;
+                const videoURL = URL.createObjectURL(file);
+                videoPlayer.src = videoURL;
+                videoContainer.style.display = 'block';
+                downloadButton.style.display = 'inline'; // إظهار زر التنزيل
+            }
+        });
+    </script>
+</body>
+</html>
