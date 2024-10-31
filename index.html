@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>تفاصيل الفيديو</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .upload-section {
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px dashed #ccc;
+            border-radius: 5px;
+        }
+        #videoInfo {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            display: none;
+        }
+        .info-row {
+            margin: 10px 0;
+            padding: 5px;
+            background-color: #f8f8f8;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>تحليل معلومات الفيديو</h1>
+        
+        <div class="upload-section">
+            <input type="file" id="videoInput" accept="video/*">
+            <p>اختر ملف فيديو لعرض تفاصيله</p>
+        </div>
+
+        <div id="videoInfo">
+            <div class="info-row">
+                <span class="info-label">اسم الملف:</span>
+                <span id="fileName"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">حجم الملف:</span>
+                <span id="fileSize"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">نوع الملف:</span>
+                <span id="fileType"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">مدة الفيديو:</span>
+                <span id="duration"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">أبعاد الفيديو:</span>
+                <span id="dimensions"></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">تاريخ التعديل:</span>
+                <span id="lastModified"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('videoInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // عرض قسم المعلومات
+                document.getElementById('videoInfo').style.display = 'block';
+                
+                // عرض معلومات الملف الأساسية
+                document.getElementById('fileName').textContent = file.name;
+                document.getElementById('fileSize').textContent = formatFileSize(file.size);
+                document.getElementById('fileType').textContent = file.type;
+                document.getElementById('lastModified').textContent = new Date(file.lastModified).toLocaleString();
+                
+                // إنشاء عنصر فيديو مؤقت لقراءة المزيد من المعلومات
+                const video = document.createElement('video');
+                video.preload = 'metadata';
+                
+                video.onloadedmetadata = function() {
+                    document.getElementById('duration').textContent = 
+                        Math.floor(video.duration / 60) + ':' + 
+                        Math.floor(video.duration % 60).toString().padStart(2, '0');
+                    document.getElementById('dimensions').textContent = 
+                        video.videoWidth + ' × ' + video.videoHeight + ' بكسل';
+                };
+                
+                video.src = URL.createObjectURL(file);
+            }
+        });
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+    </script>
+</body>
+</html>
