@@ -129,9 +129,6 @@
                 status.textContent = 'جاري معالجة الفيديو...';
                 progress.style.display = 'block';
                 progressBar.style.width = '0%';
-                
-                videoPlayer.muted = true; // كتم صوت الفيديو
-                videoPlayer.style.display = 'none'; // إخفاء الفيديو
 
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
